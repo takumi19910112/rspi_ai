@@ -1,0 +1,16 @@
+[Unit]
+Description=rspi_ai voice client
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/rspi_ai/pi_client
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/pi/rspi_ai/pi_client/.venv/bin/python main.py --config /home/pi/rspi_ai/config/config.yaml
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,43 @@
+# Copy to config/config.yaml and edit. config.yaml is gitignored.
+
+server_url: ws://localhost:8000/ws   # On Pi: set to ws://<mac-hostname>.local:8000/ws
+
+# ---- Mac server side ----
+server:
+  host: 0.0.0.0
+  port: 8000
+
+stt:
+  model: small               # tiny / base / small / medium
+  compute_type: int8
+  language: ja
+  initial_prompt: "こども ともだち あそぼう"
+
+llm:
+  ollama_base: http://localhost:11434
+  model: qwen2.5:3b-instruct   # decided in Phase 0
+  history_turns: 6
+  temperature: 0.7
+
+tts:
+  voicevox_base: http://localhost:50021
+  speaker_id: 3                # decided in Phase 0 (e.g., 3 = ずんだもん ノーマル)
+  output_sample_rate: 48000
+
+# ---- Pi client side ----
+trigger: ptt                   # ptt | cli | http | vad
+
+gpio:
+  button_pin: 17
+  bounce_time_sec: 0.05
+
+audio:
+  in_sample_rate: 16000
+  out_sample_rate: 48000
+  in_device: null              # null = system default
+  out_device: null
+  frame_ms: 20
+
+ui:
+  bridge_port: 9000
+  kiosk_url: "file:///home/pi/rspi_ai/pi_client/ui/index.html"

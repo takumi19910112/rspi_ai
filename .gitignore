@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.Python
+build/
+dist/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+htmlcov/
+*.cover
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# uv
+.uv/
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Local config / secrets
+config/config.yaml
+config/*.local.yaml
+.env
+.env.*
+!.env.example
+
+# Audio / model artifacts
+*.wav
+*.mp3
+*.flac
+*.ogg
+models/
+samples/
+cache/
+
+# Logs
+*.log
+logs/
+
+# Pi-specific
+*.pyc

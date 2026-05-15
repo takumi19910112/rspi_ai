@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=rspi_ai kiosk
+Exec=chromium-browser --kiosk --noerrdialogs --disable-session-crashed-bubble --disable-features=Translate --autoplay-policy=no-user-gesture-required file:///home/pi/rspi_ai/pi_client/ui/index.html
+X-GNOME-Autostart-enabled=true

@@ -1,0 +1,9 @@
+sounddevice>=0.5
+numpy>=1.26
+websockets>=13
+gpiozero>=2.0
+lgpio>=0.2
+pyyaml>=6.0
+aiohttp>=3.10
+soxr>=0.5
+webrtcvad>=2.0.10   ; python_version < "4"
