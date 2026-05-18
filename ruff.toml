@@ -1,0 +1,16 @@
+line-length = 100
+target-version = "py311"
+extend-exclude = ["**/.venv", "**/build", "**/dist"]
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+    "E501",   # line-too-long: ruff format handles this
+]
+
+[lint.per-file-ignores]
+"**/tests/**" = ["F401", "F811"]   # allow unused/redefined in test fixtures
+
+[format]
+quote-style = "double"
+indent-style = "space"

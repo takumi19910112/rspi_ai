@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "F=$(jq -r '.tool_input.file_path // .tool_response.filePath // empty'); if [ -n \"$F\" ] && [[ \"$F\" == *.py ]]; then uvx ruff format --quiet \"$F\"; uvx ruff check --fix --quiet \"$F\"; fi; exit 0",
+            "timeout": 30,
+            "statusMessage": "ruff (format + lint)"
+          }
+        ]
+      }
+    ]
+  }
+}
