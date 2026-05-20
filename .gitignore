@@ -33,8 +33,9 @@ ENV/
 *.swo
 .DS_Store
 
-# Claude Code local settings
+# Claude Code local settings and per-project memory
 .claude/settings.local.json
+.claude/projects/
 
 # Local config / secrets
 config/config.yaml

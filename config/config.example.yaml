@@ -15,7 +15,10 @@ stt:
 
 llm:
   ollama_base: http://localhost:11434
-  model: qwen2.5:3b-instruct   # decided in Phase 0
+  # Provisional choice from Phase 0 (see server/scripts/results/).
+  # Note: Qwen3.x needs `think: false` in the chat-API request body —
+  # app/llm.py must send this, otherwise the model spends minutes on internal reasoning.
+  model: qwen3.5:4b
   history_turns: 6
   temperature: 0.7
 
