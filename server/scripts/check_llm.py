@@ -1,14 +1,25 @@
-"""Provisional LLM check: send persona + fixed prompts to Ollama, print replies and timings.
+"""Phase 0 の LLM 選定用、再現可能な単発チェックスクリプト.
 
-Run from anywhere; paths resolve relative to the repo root.
+目的:
+    候補 LLM に同じ system prompt（persona.txt）と同じユーザー発話を投げ、
+    返答内容とレイテンシをざっくり比較する。会話履歴は持たず、毎回独立リクエスト。
+    PR レビューで「私が見たのと同じことを手元で確認できる」状態を作るのが狙い。
 
-Examples:
-    uv run --with httpx python server/scripts/check_llm.py qwen3.5:4b
-    uv run --with httpx python server/scripts/check_llm.py qwen2.5:3b --no-think-flag
-    uv run --with httpx python server/scripts/check_llm.py qwen3.5:4b --out server/scripts/results/check_qwen3.5-4b.md
+使い方:
+    # 推奨: ephemeral な httpx を使うので環境を汚さない
+    uv run --with httpx --no-project --python 3.12 server/scripts/check_llm.py qwen3.5:4b
 
-Qwen3.x models default to thinking mode (long internal reasoning). We send
-`think=false` to disable it. Pass --no-think-flag for models that reject the field.
+    # qwen2.5 など thinking モードを持たないモデルは think フィールド自体を外す
+    uv run --with httpx --no-project --python 3.12 server/scripts/check_llm.py qwen2.5:3b --no-think-flag
+
+    # Markdown レポートも保存
+    uv run --with httpx --no-project --python 3.12 server/scripts/check_llm.py qwen3.5:4b \\
+        --out /tmp/check.md
+
+注意:
+    Qwen3.x 系はデフォルトで thinking モード（数分におよぶ内部推論を出力）になり、
+    chat エンドポイントが事実上ハングする。`think: false` を送って抑制する必要があり、
+    本スクリプトのデフォルト挙動とした。Phase 1 の app/llm.py でも同じフラグを送る前提。
 """
 
 from __future__ import annotations
@@ -20,15 +31,18 @@ from pathlib import Path
 
 import httpx
 
+# スクリプトの起動ディレクトリに依存させず、リポジトリ root を基準に persona を解決する
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PERSONA_PATH = REPO_ROOT / "server" / "app" / "prompts" / "persona.txt"
 OLLAMA_URL = "http://localhost:11434/api/chat"
 
+# 子どもらしい質問を 4 種類。事実 / 感情ぶつけ / 知識質問 / 価値観質問 を 1 つずつ入れ、
+# モデルの挙動の幅（共感、事実精度、わからない時の素直さ、しつけ寄りの問いへの態度）を見たい
 PROMPTS: list[str] = [
-    "ねえねえ、そらはどうしてあおいの？",
-    "きょうようちえんで、ともだちとけんかしちゃった。",
-    "いちばんつよいどうぶつってなに？",
-    "ぴーまんきらい、たべないとだめ？",
+    "ねえねえ、そらはどうしてあおいの？",  # 事実質問
+    "きょうようちえんで、ともだちとけんかしちゃった。",  # 感情の吐露
+    "いちばんつよいどうぶつってなに？",  # 知識 + 主観
+    "ぴーまんきらい、たべないとだめ？",  # 価値観 / しつけ
 ]
 
 
@@ -40,6 +54,7 @@ def chat_once(
     think: bool | None,
     temperature: float,
 ) -> tuple[str, float]:
+    """1 リクエスト = 1 ターン。会話履歴は持たない。返答テキストと実測秒を返す."""
     body: dict = {
         "model": model,
         "messages": [
@@ -49,8 +64,11 @@ def chat_once(
         "stream": False,
         "options": {"temperature": temperature},
     }
+    # think: false は Qwen3.x の reasoning モード抑制。
+    # 受け取らないモデルもあるので、--no-think-flag が立っている時は body から落とす
     if think is not None:
         body["think"] = think
+
     t0 = time.perf_counter()
     r = httpx.post(OLLAMA_URL, json=body, timeout=120.0)
     elapsed = time.perf_counter() - t0
@@ -59,18 +77,19 @@ def chat_once(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("model", help="Ollama model name, e.g. qwen3.5:4b")
+    ap = argparse.ArgumentParser(description="Phase 0 LLM check (persona + fixed kid prompts)")
+    ap.add_argument("model", help="Ollama 上のモデル名。例: qwen3.5:4b")
     ap.add_argument(
         "--no-think-flag",
         action="store_true",
-        help="Omit the `think` field (use for models that reject it)",
+        help="`think` フィールド自体を送らない。Qwen3.x 以外（qwen2.5, llama3.2 等）向け",
     )
     ap.add_argument("--temperature", type=float, default=0.7)
-    ap.add_argument("--out", type=Path, help="Also write Markdown report to this path")
+    ap.add_argument("--out", type=Path, help="Markdown レポートも書き出す（任意）")
     args = ap.parse_args()
 
     persona = PERSONA_PATH.read_text(encoding="utf-8")
+    # --no-think-flag が立っていればフィールド省略、無ければ false を送って thinking 抑制
     think: bool | None = None if args.no_think_flag else False
 
     header_lines = [
